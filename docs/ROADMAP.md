@@ -36,6 +36,18 @@ excellent and functional; the other systems wait for stage 2.
 - REAL smoke test of the slim build on a live session: toasts, unread
   badges, rail dots and one call; the page link must behave like the
   old bridge on the telemetry side, with none of its surface.
+- Build the ENGINE SEAM now, while exactly one engine exists (user
+  question 2026-11-04: "can we change engines later without touching
+  the rest of the code?" yes, with this seam): ONE `Runtime` type alias
+  in main.rs (the AppHandleBox alias already carries most of it) plus
+  ONE `src/engine/` module collecting the per-engine behaviors: the
+  netguard request filter, the theme color-scheme pin, the popup
+  policy, the eval-transport quirk table (WebView2's double-encoded
+  unwrap), and the permission shield gate. Verified inventory
+  2026-11-04: the raw-engine code lives in TWO sites only (netguard.rs
+  and the theme pin in window.rs); twenty `Wry` type mentions ride the
+  alias path; the page link protocol (hash beacon + JSON) is already
+  engine-neutral. Stage 2 then swaps an implementation, not the code.
 - The devtools harness v1 under its law (RED-LINES section 7), plus
   the tools/ sweep of dead page-op drivers (the probes stay: they are
   human-attached DevTools class).
@@ -79,6 +91,19 @@ What changes, precisely:
   the shell needs (Notification surface or a workable equivalent),
   a bounded payload size for a desktop chat hub, and a license that
   coexists with AGPL-3.0 linking.
+
+### The seam (why the swap stays contained)
+
+Corvid talks to its pages in HTTP + JSON + JavaScript strings; engines
+meet the app only inside `src/engine/<impl>`. The five behaviors in
+that module are CONCEPTS each engine reimplements (request
+interception, permission gating, color scheme, popup policy, eval
+quirks): the seam makes that a contained reimplementation, not code
+surgery. Two honest limits stay on paper: the wry-specific callback
+slots (permission request, NewWindowResponse) differ across runtime
+crates, and Servo's missing capabilities (multi-webview, transparency,
+request bodies) demand shell adaptations BEYOND the seam, which is
+exactly why Servo keeps the quarterly watch instead of a deadline.
 
 ### Candidates, verified against 2026 sources (2026-11-04)
 
