@@ -1209,18 +1209,34 @@ curl http://127.0.0.1:29977/api/accounts
 >   tools/*.js: the 65279 killer stays at zero), zero em-dashes in
 >   the tree.
 > WHERE WE LEFT OFF / NEXT SESSION RAMP:
->   1. THE REPO CUT (user pre-approved "borrar y recrear con v2.0.0",
->      still owed its final explicit GO): delete da1fs/corvid (0
->      forks, 0 stars, deletes v1.0.0..v1.4.4 + binaries), recreate
->      fresh single-commit history, tag v2.0.0, watch CI, verify the
->      release. corvid-site copy needs the API feature removal +
->      live-URL check the same day.
->   2. Version normalization: Cargo.toml + tauri.conf.json already
->      at 2.0.0; the release workflow asset naming/patterns check.
->   3. Run a REAL login session on the slim build (notifications +
+>   1. THE REPO CUT: DONE 2026-11-04. The user granted the GO + the
+>      delete_repo device authorization (code flow). da1fs/corvid
+>      DELETED and RECREATED fresh: ONE commit (4c8e8bb: Corvid 2.0.0)
+>      + tag v2.0.0; local pre-cut history preserved OFFLINE at
+>      backups/git-history-pre-v200-cutoff (never re-push it). The
+>      release v2.0.0 EXISTS with the Windows asset attached
+>      (Zapdude_2.0.0_x64-setup.exe, sha256 6e9d2819...412158). The
+>      macOS jobs FAILED 3x in a row, always 15m01s, always "job was
+>      not acquired by Runner of type hosted" + capacity banners:
+>      infrastructure, not code (windows job kept passing every
+>      round). PENDING: rerun `gh run rerun 41852144241 --repo
+>      da1fs/corvid --failed` (or the run page button) later in the
+>      day; the dmg assets attach to the same release whenever a macOS
+>      runner shows up. The old 1.0.0..1.4.4 releases/tags died with
+>      the deletion (by design: no API builds left on the official
+>      channel); installed 1.4.4 apps now update to 2.0.0 through the
+>      existing feed (matcher accepts the Zapdude_ naming).
+>   2. corvid-site: pushed (a7e636a) the copy pass that removes every
+>      API/agents mention in BOTH dictionaries + the feature card
+>      replaced by "Cero automatizacion / No automation surface" with
+>      the ToS line; the buttons now say "GitHub API" for the version
+>      resolution. Verify the live render after Pages rebuilds.
+>   3. Version normalization: Cargo.toml + tauri.conf.json already
+>      at 2.0.0; carried by the single commit.
+>   4. Run a REAL login session on the slim build (notifications +
 >      badges + dots + a call): confirm the page link behaves like
 >      the old bridge on the telemetry side.
->   4. Rename cut (Corvid binary/AUMID/paths) still waits on its own
+>   5. Rename cut (Corvid binary/AUMID/paths) still waits on its own
 >      checklist; the red-lines doc must ride along unchanged.
 > OPERATING LAWS THIS SESSION (further): the repo language stays
 > English; the ToS honesty section keeps zero lawyer tone; every
