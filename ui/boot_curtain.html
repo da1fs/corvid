@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corvid</title>
+  <style>
+    /* Boot curtain, service-branded: the account being opened shows ITS
+       OWN logo (WhatsApp green/messenger blue/instagram pink/X black/
+       tiktok red/twitch purple) while the chat page boots behind the
+       cover. The Corvid mark sits small as the host ("powered by").
+       Self-dismisses on an honest session state or the safety timer. */
+    :root {
+      --bg: #0f241c;
+      --panel: #0c1f18;
+      --text: #eef4f1;
+      --muted: #7d948a;
+      --stroke: rgba(255, 255, 255, 0.10);
+      --tile: rgba(255, 255, 255, 0.05);
+      --accent: #25d366;
+      --accent-glow: rgba(46, 224, 111, 0.30);
+    }
+    :root[data-theme="light"] {
+      --bg: #f3f7f5;
+      --panel: #ffffff;
+      --text: #0c2118;
+      --muted: #5d7568;
+      --stroke: rgba(0, 0, 0, 0.10);
+      --accent: #12b866;
+      --accent-glow: rgba(18, 184, 102, 0.22);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--bg);
+      overflow: hidden; user-select: none;
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      transition: opacity 0.22s ease;
+    }
+    body.fading { opacity: 0; pointer-events: none; }
+    .wrap {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px;
+    }
+    .service-mark {
+      width: 74px; height: 74px; border-radius: 20px; flex-shrink: 0;
+      background: var(--service-tint, linear-gradient(140deg, #34e877 0%, #0f9e6c 100%));
+      border: 1px solid var(--stroke);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.18);
+    }
+    .service-mark svg { width: 38px; height: 38px; }
+    .service-mark svg path { fill: var(--service-fg, #06231a); }
+    h1 { font-size: 17px; font-weight: 650; letter-spacing: 0.2px; }
+    .who { font-size: 12.5px; color: var(--muted); }
+    .ring {
+      width: 24px; height: 24px; margin-top: 4px;
+      border-radius: 50%;
+      border: 3px solid var(--tile);
+      border-top-color: var(--accent);
+      animation: spin 0.9s linear infinite;
+    }
+    .foot {
+      position: absolute; bottom: 18px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      font-size: 11px; color: var(--muted);
+    }
+    .foot .zaplogo {
+      width: 18px; height: 18px; border-radius: 6px;
+      background: linear-gradient(140deg, #34e877 0%, #0f9e6c 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .foot .zaplogo svg { width: 10px; height: 10px; }
+    .foot .zaplogo svg path { fill: #06231a; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="service-mark" id="serviceMark">
+      <svg viewBox="0 0 24 24" id="serviceGlyphV"><path/></svg>
+    </div>
+    <h1 id="headline">Getting your chat ready</h1>
+    <div class="who" id="who">Preparing the account&hellip;</div>
+    <div class="ring"></div>
+  </div>
+  <div class="foot">
+    <div class="zaplogo">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </div>
+    <span>Powered by Corvid</span>
+  </div>
+
+  <script>
+    "use strict";
+
+    // Native-app feel: no browser context menu.
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    const params = new URLSearchParams(location.search);
+    const accountId = params.get("account") || "";
+    const service = (params.get("service") || "whatsapp").toLowerCase();
+
+    // Service branding: glyph + tint + accent (the twitch blob is the
+    // twitch frame; the X core is dark on a light tint).
+    const GLYPHS = {
+      whatsapp: {
+        tint: "linear-gradient(140deg, #2ee06f 0%, #0f9e6c 100%)", fg: "#06231a",
+        accent: "#25d366", glow: "rgba(46,224,111,0.30)",
+        name: "WhatsApp",
+        path: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z",
+      },
+      facebook: {
+        tint: "linear-gradient(140deg, #1877f2 0%, #0b5bcb 100%)", fg: "#ffffff",
+        accent: "#1877f2", glow: "rgba(24,119,242,0.35)",
+        name: "Messenger",
+        path: "M.001 11.639C.001 4.949 5.241 0 12.001 0S24 4.95 24 11.639c0 6.689-5.24 11.638-12 11.638-1.21 0-2.38-.16-3.47-.46a.96.96 0 00-.64.05l-2.39 1.05a.96.96 0 01-1.35-.85l-.07-2.14a.97.97 0 00-.32-.68A11.39 11.389 0 01.002 11.64zm8.32-2.19l-3.52 5.6c-.35.53.32 1.139.82.75l3.79-2.87c.26-.2.6-.2.87 0l2.8 2.1c.84.63 2.04.4 2.6-.48l3.52-5.6c.35-.53-.32-1.13-.82-.75l-3.79 2.87c-.25.2-.6.2-.86 0l-2.8-2.1a1.8 1.8 0 00-2.61.48z",
+      },
+      instagram: {
+        tint: "linear-gradient(140deg, #e1306c 0%, #833ab4 100%)", fg: "#ffffff",
+        accent: "#e1306c", glow: "rgba(225,48,108,0.35)",
+        name: "Instagram",
+        path: "M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z",
+      },
+      x: {
+        tint: "linear-gradient(140deg, #2b2f33 0%, #141719 100%)", fg: "#ffffff",
+        accent: "#2b2f33", glow: "rgba(120,140,150,0.25)",
+        name: "X",
+        path: "M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z",
+      },
+      tiktok: {
+        tint: "linear-gradient(140deg, #1d1f23 0%, #010101 100%)", fg: "#ffffff",
+        accent: "#fe2c55", glow: "rgba(254,44,85,0.35)",
+        name: "TikTok",
+        path: "M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 1.41.01 2.83.01 4.25 0 1.24-.02 2.48.03 3.71-.01 2.79-.95 5.56-2.9 7.55-1.96 2.01-4.79 2.98-7.63 2.77-2.77-.2-5.44-1.77-6.8-4.2-.46-.86-.79-1.79-.93-2.75-.16-1.44.02-2.93.53-4.28 1.04-2.66 3.61-4.6 6.42-4.98.72-.12 1.45-.14 2.17-.08 0 1.51.01 3.03-.01 4.54-.27-.06-.55-.13-.83-.19-.75-.14-1.53-.05-2.25.25-1.52.62-2.59 2.2-2.55 3.84.01 1.34.63 2.67 1.66 3.52.97.79 2.3 1.06 3.53.78 1.48-.31 2.71-1.48 3.22-2.91.18-.44.28-.91.3-1.39.04-4.15-.01-8.3.02-12.45 0-.01.01-.02.01-.03z",
+      },
+      twitch: {
+        tint: "linear-gradient(140deg, #9146ff 0%, #6441a5 100%)", fg: "#ffffff",
+        accent: "#9146ff", glow: "rgba(145,70,255,0.35)",
+        name: "Twitch",
+        path: "M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z",
+      },
+    };
+    const brand = GLYPHS[service] || GLYPHS.whatsapp;
+    try {
+      const root = document.documentElement;
+      root.style.setProperty("--service-tint", brand.tint);
+      root.style.setProperty("--service-fg", brand.fg);
+      root.style.setProperty("--accent", brand.accent);
+      root.style.setProperty("--accent-glow", brand.glow);
+      document.getElementById("serviceGlyphV").innerHTML =
+        '<path fill="' + brand.fg + '" d="' + brand.path + '"/>';
+      document.getElementById("who").textContent = brand.name + " account";
+    } catch (_brandError) {
+      // The generic brand beat below still works.
+    }
+
+    // Theme follows the saved preference.
+    fetch("/api/prefs")
+      .then((r) => r.json())
+      .then((prefs) => {
+        if (document.documentElement.dataset.theme !== "dark" || prefs.theme === "light") {
+          document.documentElement.dataset.theme = prefs.theme === "light" ? "light" : "dark";
+        }
+      })
+      .catch(() => {});
+
+    function closeCurtain() {
+      const body = document.body;
+      if (body.classList.contains("fading")) return;
+      body.classList.add("fading");
+      try {
+        fetch("/api/ui/bootcurtain/hide", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ account: accountId }),
+        }).catch(() => {});
+      } catch (_hideError) {}
+    }
+
+    // The session snapshot is the honest readiness signal.
+    const RESOLVED = new Set(["logged_in", "needs_login", "scan_qr", "page_error"]);
+    let settled = false;
+    async function tick() {
+      if (settled) return;
+      try {
+        const res = await fetch("/api/accounts");
+        if (res.ok) {
+          const payload = await res.json();
+          const accounts = (payload && payload.accounts) || [];
+          const mine = accounts.find((a) => a.id === accountId);
+          if (mine && RESOLVED.has(String(mine.session_state || ""))) {
+            settled = true;
+            closeCurtain();
+            return;
+          }
+        }
+      } catch (_pollError) {
+        // The shell server may still be booting; keep waiting.
+      }
+      if (Date.now() - startedAt > 9000) {
+        settled = true;
+        closeCurtain();
+      }
+    }
+
+    const startedAt = Date.now();
+    tick();
+    setInterval(tick, 650);
+  </script>
+</body>
+</html>

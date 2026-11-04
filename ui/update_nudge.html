@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corvid</title>
+  <style>
+    /* The center "new update ready" card. This webview is born FULL content
+       size (compositor law) and is immediately re-anchored by the host into
+       a 380x204 center slot. The body is transparent
+       (WebviewBuilder::transparent(true)) so only the rounded card paints
+       over the chat. The card EXISTS only when the updater says: "ready" +
+       "ask" policy + not dismissed for this tag; the page itself also
+       watches the state and self-closes when that stops being true. */
+    :root {
+      --bg: #0f241c;
+      --text: #eef4f1;
+      --muted: #7d948a;
+      --stroke: rgba(255, 255, 255, 0.10);
+      --tile: rgba(255, 255, 255, 0.05);
+      --tile-hover: rgba(255, 255, 255, 0.09);
+      --accent: #25d366;
+      --accent-ink: #06231a;
+    }
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --text: #0c2118;
+      --muted: #5d7568;
+      --stroke: rgba(0, 0, 0, 0.10);
+      --tile: rgba(0, 0, 0, 0.045);
+      --accent-ink: #06231a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: transparent !important;
+      overflow: hidden;
+      user-select: none;
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+    }
+    .card {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      padding: 16px 18px 14px;
+      background: var(--bg);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
+      animation: arrive 0.16s ease-out;
+    }
+    :root[data-theme="light"] .card { box-shadow: 0 12px 34px rgba(0,0,0,0.20); }
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(5px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .head { display: flex; align-items: center; gap: 10px; }
+    .head svg { width: 21px; height: 21px; color: var(--accent); flex-shrink: 0; }
+    .title { font-size: 14.5px; font-weight: 650; letter-spacing: 0.2px; }
+    .desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+    .desc b { color: var(--text); font-weight: 650; }
+    .remember {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--muted);
+      cursor: pointer; margin-top: 1px;
+    }
+    .remember input { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+    .actions { display: flex; gap: 9px; margin-top: 2px; }
+    button {
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      padding: 9px 16px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.12s ease, transform 0.1s ease, opacity 0.12s ease;
+    }
+    button.primary {
+      background: linear-gradient(140deg, #34e877 0%, #0f9e6c 100%);
+      color: var(--accent-ink);
+      border: none;
+      font-weight: 650;
+    }
+    button.primary:hover { filter: brightness(1.06); }
+    button.primary:active { transform: scale(0.97); }
+    button.ghost {
+      background: var(--tile);
+      color: var(--text);
+      border: 1px solid var(--stroke);
+    }
+    button.ghost:hover { background: var(--tile-hover); }
+    button:disabled { opacity: 0.55; cursor: wait; transform: none; }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="head">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Download-ready glyph (Feather, MIT): arrow into a tray -->
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <div class="title" id="title">New version is ready</div>
+    </div>
+    <p class="desc" id="desc">The update was downloaded and verified. Installing restarts Corvid and reopens right after.</p>
+    <label class="remember">
+      <input type="checkbox" id="remember" />
+      <span>Don't show this message again</span>
+    </label>
+    <div class="actions">
+      <button class="primary" id="updateBtn">Update now</button>
+      <button class="ghost" id="laterBtn">No thanks</button>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+
+    // The release tag this card was born for; empty until the first
+    // /api/update read fills it (noThanks needs it for the dismissal).
+    let STATE_TAG = "";
+
+    async function api(path, options) {
+      const res = await fetch(path, options);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    // Policy/dismiss posts ride /api/update/prefs (one endpoint, optional
+    // fields); the card close rides /api/update/nudge/hide and happens
+    // LAST so a closed webview can never swallow its own state POST.
+    async function savePrefs(fields) {
+      try {
+        await api("/api/update/prefs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        });
+        return true;
+      } catch (e) { return false; }
+    }
+
+    function closeCard() {
+      fetch("/api/update/nudge/hide", { method: "POST" }).catch(() => {});
+    }
+
+    // The card must be true to the live state: a "fresh" turn (someone
+    // else installed), a policy flip or a dismiss at the wrong moment all
+    // self-close it. The host double-checks on every phase change too.
+    async function stateIsStillNudgeWorthy(expectTag) {
+      try {
+        const payload = await api("/api/update");
+        const u = (payload && payload.update) || {};
+        return u.phase === "ready" && (u.mode || "ask") === "ask"
+          && u.latest_tag === expectTag && (u.dismissed_tag || "") !== expectTag;
+      } catch (e) { return false; }
+    }
+
+    // busy: a click flow is running (Update now / No thanks). installed:
+    // the install POST was ACCEPTED - the poll keeps watching (the phase
+    // turned "installing" and the card must close itself).
+    let busy = false;
+    let installed = false;
+
+    async function updateNow() {
+      if (busy) return;
+      busy = true;
+      const btn = $("updateBtn");
+      const ghost = $("laterBtn");
+      btn.disabled = true;
+      ghost.disabled = true;
+      const remember = $("remember").checked;
+      $("desc").innerHTML = "Installing&hellip; Corvid reopens in a moment.";
+      try {
+        // The promise ("update automatically from now on") registers
+        // BEFORE the install post so a fast exit can never outrun it.
+        if (remember && !(await savePrefs({ mode: "auto" }))) {
+          throw new Error("could not save the preference");
+        }
+        await api("/api/update/install", { method: "POST" });
+        // Success: park the poll watchers; the host parks the webview on
+        // the "installing" phase (or this page closes itself next tick).
+        installed = true;
+      } catch (e) {
+        busy = false;
+        btn.disabled = false;
+        ghost.disabled = false;
+        $("desc").textContent = "Could not start the install (" + (e.message || "unknown reason") + "). Try again from Corvid's menu.";
+      }
+    }
+
+    async function noThanks() {
+      if (busy) return;
+      busy = true;
+      const remember = $("remember").checked;
+      // "off" (checked + No thanks) NEVER installs on its own - the
+      // manual buttons in Corvid's menu stay the only path.
+      const fields = { dismissed_tag: STATE_TAG };
+      if (remember) fields.mode = "off";
+      const saved = await savePrefs(fields);
+      if (!saved) {
+        // The dismissal did not land: keep the card alive and honest
+        // (closing here would silently re-show it on the next poll loop).
+        busy = false;
+        $("desc").textContent = "Could not save the choice; will keep asking. Try again.";
+        return;
+      }
+      closeCard();
+    }
+
+    $("updateBtn").addEventListener("click", updateNow);
+    $("laterBtn").addEventListener("click", noThanks);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !busy) noThanks();
+    });
+    // Native-app feel: no browser context menu on the shell UI.
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    (async () => {
+      // Theme follows the saved preference (one fetch at mount).
+      try {
+        const prefs = await api("/api/prefs");
+        document.documentElement.dataset.theme = prefs.theme === "light" ? "light" : "dark";
+      } catch (e) {}
+      try {
+        const payload = await api("/api/update");
+        const u = (payload && payload.update) || {};
+        const tag = u.latest_tag || "";
+        STATE_TAG = tag;
+        document.title = "Corvid update";
+        $("title").textContent = tag ? "New version v" + tag + " is ready" : "New version is ready";
+        $("title").dataset.tag = tag;
+        $("updateBtn").textContent = tag ? "Update to v" + tag : "Update now";
+        if (u.phase !== "ready" || (u.mode || "ask") !== "ask"
+          || (u.dismissed_tag || "") === tag) {
+          // Not our moment (stale race / policy changed): close quietly.
+          closeCard();
+          return;
+        }
+        setInterval(async () => {
+          if (busy && !installed) return;
+          if (!(await stateIsStillNudgeWorthy(tag))) closeCard();
+        }, 1500);
+      } catch (e) {
+        closeCard();
+      }
+    })();
+  </script>
+</body>
+</html>

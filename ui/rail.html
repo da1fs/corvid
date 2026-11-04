@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <title>Corvid</title>
+  <style>
+    :root {
+      --bg-top: #0d1f19;
+      --bg-bottom: #08130f;
+      --stroke: rgba(255, 255, 255, 0.07);
+      --tile: rgba(255, 255, 255, 0.045);
+      --tile-hover: rgba(255, 255, 255, 0.09);
+      --accent: #2ee06f;
+      --accent-soft: rgba(46, 224, 111, 0.14);
+      --text: #eef4f1;
+      --muted: #6b8279;
+      --warn: #f5b83d;
+      --danger: #ff5f56;
+      --dot-border: #08130f;
+    }
+    :root[data-theme="light"] {
+      --bg-top: #f3f8f5;
+      --bg-bottom: #e7efeb;
+      --stroke: rgba(0, 0, 0, 0.09);
+      --tile: rgba(0, 0, 0, 0.05);
+      --tile-hover: rgba(0, 0, 0, 0.09);
+      --accent-soft: rgba(18, 140, 108, 0.12);
+      --text: #0c2118;
+      --muted: #5d7568;
+      --dot-border: #e7efeb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+    html, body { height: 100%; }
+    body {
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 0;
+      overflow: hidden;
+      border-right: 1px solid var(--stroke);
+    }
+    svg.icon { width: 100%; height: 100%; display: block; }
+
+    /* ---- Brand / logo (opens the full-screen options) ---- */
+    .logo {
+      width: 44px; height: 44px; border-radius: 14px;
+      background: linear-gradient(140deg, #34e877 0%, #0f9e6c 100%);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: pointer; position: relative;
+      box-shadow:
+        0 2px 10px rgba(46, 224, 111, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+    }
+    .logo:hover { transform: translateY(-1px) scale(1.04); box-shadow: 0 4px 18px rgba(46,224,111,0.5), inset 0 1px 0 rgba(255,255,255,0.35); }
+    .logo:active { transform: scale(0.97); }
+    .logo svg { width: 22px; height: 22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); }
+    .logo svg path { fill: #06231a; }
+    .logo.open { box-shadow: 0 0 0 2px rgba(46,224,111,0.55), 0 4px 18px rgba(46,224,111,0.5), inset 0 1px 0 rgba(255,255,255,0.35); }
+
+    /* ---- Delicate curved divider under the logo ---- */
+    .divider {
+      width: 44px; height: 3px; flex-shrink: 0; border: none;
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      background: linear-gradient(90deg, rgba(46,224,111,0) 0%, rgba(46,224,111,0.38) 50%, rgba(46,224,111,0) 100%);
+      margin-top: 12px;
+    }
+
+    /* ---- Accounts scroll area: EVERY tile spaced uniformly (12px) ---- */
+    .rail-scroll {
+      flex: 1; overflow-y: auto; width: 100%;
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px;                       /* the only gap: accounts, + */
+      padding: 12px 0 14px;
+      scrollbar-width: none;
+      mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%);
+      -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 16px), transparent 100%);
+    }
+    .rail-scroll::-webkit-scrollbar { display: none; }
+    #rail {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      width: 100%;
+    }
+
+    /* ---- Account tiles + the in-flow "+" ---- */
+    .avatar, .add-btn {
+      width: 44px; height: 44px; border-radius: 14px;
+      background: var(--tile);
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; position: relative;
+      border: 1px solid transparent;
+      transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .avatar svg, .add-btn svg { width: 20px; height: 20px; opacity: 1; }
+    .avatar:hover, .add-btn:hover { background: var(--tile-hover); transform: translateY(-1px); border-color: var(--stroke); }
+    .avatar:active, .add-btn:active { transform: scale(0.93); transition-duration: 0.05s; }
+    .avatar.active {
+      background: var(--accent-soft);
+      border-color: rgba(46, 224, 111, 0.55);
+      box-shadow: 0 0 0 1px rgba(46,224,111,0.18), 0 2px 14px rgba(46,224,111,0.22);
+    }
+    .avatar.active svg { opacity: 1; color: var(--accent); }
+    /* The + answers instantly too: pressed fill while its strip is open
+       (the shell payload corrects it on the next poll, like the tiles). */
+    .add-btn.open {
+      background: var(--accent-soft);
+      border-color: rgba(46, 224, 111, 0.7);
+      box-shadow: 0 0 0 1px rgba(46,224,111,0.2), 0 2px 14px rgba(46,224,111,0.2);
+    }
+    /* Service identity: each account wears its chat web's REAL logo and
+     * brand color (WhatsApp green / Messenger blue; both simple-icons,
+     * CC0). The Corvid bolt stays only on the brand logo (top of rail). */
+    .avatar.svc-wa svg { color: #25d366; }
+    .avatar.svc-fb svg { color: #00b2ff; }
+    .avatar.svc-fb.active svg { color: #33c0ff; }
+    .avatar.svc-ig svg { color: #e1306c; }
+    .avatar.svc-ig.active svg { color: #f2548a; }
+    .avatar.svc-x svg { color: #cfd8d3; }
+    .avatar.svc-x.active svg { color: #ffffff; }
+    .avatar.svc-tiktok svg { color: #fe2c55; }
+    .avatar.svc-tiktok.active svg { color: #ff5c7c; }
+    .avatar.svc-twitch svg { color: #b07bff; }
+    .avatar.svc-twitch.active svg { color: #d9b8ff; }
+    .avatar.armed {
+      background: rgba(255, 95, 86, 0.16);
+      border-color: rgba(255, 95, 86, 0.6);
+      box-shadow: 0 0 0 1px rgba(255,95,86,0.25), 0 2px 14px rgba(255,95,86,0.3);
+      animation: armed-pulse 0.9s ease-in-out infinite;
+    }
+    .avatar.armed svg { color: var(--danger); opacity: 1; }
+    @keyframes armed-pulse { 50% { transform: scale(1.08); } }
+    .avatar .dot {
+      position: absolute; right: -2px; bottom: -2px;
+      width: 12px; height: 12px; border-radius: 50%;
+      border: 2px solid var(--dot-border);
+      background: #5f7a70;
+    }
+    .dot.logged { background: var(--accent); }
+    .dot.qr { background: var(--warn); }
+    .dot.detecting { background: #5f7a70; }
+    .dot.err { background: var(--danger); }
+
+    /* ---- Unread badge (mobile-style count bubble) ----
+       Top-right corner; the session status dot owns the bottom-right.
+       The count comes from the account's own page title (see
+       scripts/unread_watcher.js) - one truthful number, no selectors. */
+    .avatar .badge {
+      position: absolute; right: -6px; top: -5px;
+      min-width: 18px; height: 18px;
+      padding: 0 5px;
+      border-radius: 10px;
+      background: var(--accent); color: #06231a;
+      font-size: 10.5px; font-weight: 750;
+      line-height: 15px; text-align: center;
+      border: 2px solid var(--dot-border);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255,255,255,0.25);
+      display: none;
+      z-index: 5;
+    }
+    .avatar .badge.on { display: block; }
+    body.badges-off .avatar .badge { display: none !important; }
+
+    .add-btn {
+      background: var(--tile);
+      border: 1.5px dashed rgba(46, 224, 111, 0.4);
+      color: var(--accent);
+    }
+    .add-btn svg { width: 18px; height: 18px; }
+    .add-btn:hover { background: var(--accent-soft); border-color: rgba(46,224,111,0.7); transform: translateY(-1px); }
+    .add-btn:disabled { opacity: 0.45; cursor: wait; transform: none; }
+
+    /* ---- "+" hover trigger ----
+       The horizontal menu is a NEIGHBOR webview (the 76px rail viewport
+       clips anything painted past its edge - proved live with an on-screen
+       marker). Hovering the + opens the strip anchored beside the tile;
+       see the host endpoints (window.rs) for the open/close choreography. */
+    .add-wrap { position: relative; flex-shrink: 0; margin-bottom: 16px; }
+
+    .tooltip {
+      position: absolute; left: 58px; top: 50%; transform: translateY(-50%) translateX(-4px);
+      background: rgba(16, 28, 24, 0.96); color: #eef4f1;
+      font-size: 12px; font-weight: 500; letter-spacing: 0.1px;
+      padding: 7px 11px; border-radius: 9px; white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.14s ease, transform 0.14s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+      z-index: 20;
+    }
+    :root[data-theme="light"] .tooltip { background: rgba(255,255,255,0.98); color: #0c2118; box-shadow: 0 8px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.08); }
+    .avatar:hover .tooltip, .logo:hover .tooltip, .add-btn:hover .tooltip {
+      opacity: 1; transform: translateY(-50%) translateX(0);
+    }
+    .avatar.armed .tooltip { background: rgba(60, 18, 16, 0.97); color: #ffb4ae; opacity: 1; transform: translateY(-50%) translateX(0); }
+
+    /* ---- "More accounts below" indicator ---- */
+    .more-indicator {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      width: 26px; height: 18px; border-radius: 9px;
+      background: var(--tile-hover); color: var(--muted);
+      display: none; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 15;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      animation: more-bounce 1.6s ease-in-out infinite;
+    }
+    .more-indicator.show { display: flex; }
+    .more-indicator svg { width: 12px; height: 12px; }
+    @keyframes more-bounce { 50% { transform: translateX(-50%) translateY(2px); } }
+
+    .offline {
+      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
+      background: rgba(80, 56, 18, 0.95); color: var(--warn); font-size: 10.5px; font-weight: 600;
+      padding: 4px 10px; border-radius: 7px; display: none; z-index: 30;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+  <!-- Icon library -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-bolt" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M13.2 2.2c.4-.5 1.2-.1 1.1.5l-1.1 6.6h5.1c.6 0 .9.7.5 1.1L10.8 21.8c-.4.5-1.2.1-1.1-.5l1.1-6.6H5.7c-.6 0-.9-.7-.5-1.1L13.2 2.2z"/>
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12h14"/>
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>
+      </symbol>
+      <symbol id="i-chevdown" viewBox="0 0 24 24">
+        <path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/>
+      </symbol>
+      <symbol id="i-fb" viewBox="0 0 24 24">
+        <!-- Messenger logo (simple-icons, CC0) -->
+        <path fill="currentColor" d="M.001 11.639C.001 4.949 5.241 0 12.001 0S24 4.95 24 11.639c0 6.689-5.24 11.638-12 11.638-1.21 0-2.38-.16-3.47-.46a.96.96 0 00-.64.05l-2.39 1.05a.96.96 0 01-1.35-.85l-.07-2.14a.97.97 0 00-.32-.68A11.39 11.389 0 01.002 11.64zm8.32-2.19l-3.52 5.6c-.35.53.32 1.139.82.75l3.79-2.87c.26-.2.6-.2.87 0l2.8 2.1c.84.63 2.04.4 2.6-.48l3.52-5.6c.35-.53-.32-1.13-.82-.75l-3.79 2.87c-.25.2-.6.2-.86 0l-2.8-2.1a1.8 1.8 0 00-2.61.48z"/>
+      </symbol>
+      <symbol id="i-wa" viewBox="0 0 24 24">
+        <!-- WhatsApp logo (simple-icons, CC0) -->
+        <path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+      </symbol>
+      <symbol id="i-xcorp" viewBox="0 0 24 24">
+        <!-- X logo (simple-icons, CC0) -->
+        <path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+      </symbol>
+      <symbol id="i-tt" viewBox="0 0 24 24">
+        <!-- TikTok logo (simple-icons glyph; brand tri-layer: cyan halo
+             offset up-left, red halo down-right, pale core center) -->
+        <path fill="#25f4ee" transform="translate(-0.7,-0.7)" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 1.41.01 2.83.01 4.25 0 1.24-.02 2.48.03 3.71-.01 2.79-.95 5.56-2.9 7.55-1.96 2.01-4.79 2.98-7.63 2.77-2.77-.2-5.44-1.77-6.8-4.2-.46-.86-.79-1.79-.93-2.75-.16-1.44.02-2.93.53-4.28 1.04-2.66 3.61-4.6 6.42-4.98.72-.12 1.45-.14 2.17-.08 0 1.51.01 3.03-.01 4.54-.27-.06-.55-.13-.83-.19-.75-.14-1.53-.05-2.25.25-1.52.62-2.59 2.2-2.55 3.84.01 1.34.63 2.67 1.66 3.52.97.79 2.3 1.06 3.53.78 1.48-.31 2.71-1.48 3.22-2.91.18-.44.28-.91.3-1.39.04-4.15-.01-8.3.02-12.45 0-.01.01-.02.01-.03z"/>
+        <path fill="#fe2c55" transform="translate(0.7,0.7)" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 1.41.01 2.83.01 4.25 0 1.24-.02 2.48.03 3.71-.01 2.79-.95 5.56-2.9 7.55-1.96 2.01-4.79 2.98-7.63 2.77-2.77-.2-5.44-1.77-6.8-4.2-.46-.86-.79-1.79-.93-2.75-.16-1.44.02-2.93.53-4.28 1.04-2.66 3.61-4.6 6.42-4.98.72-.12 1.45-.14 2.17-.08 0 1.51.01 3.03-.01 4.54-.27-.06-.55-.13-.83-.19-.75-.14-1.53-.05-2.25.25-1.52.62-2.59 2.2-2.55 3.84.01 1.34.63 2.67 1.66 3.52.97.79 2.3 1.06 3.53.78 1.48-.31 2.71-1.48 3.22-2.91.18-.44.28-.91.3-1.39.04-4.15-.01-8.3.02-12.45 0-.01.01-.02.01-.03z"/>
+        <path fill="#f2f5f4" d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 1.41.01 2.83.01 4.25 0 1.24-.02 2.48.03 3.71-.01 2.79-.95 5.56-2.9 7.55-1.96 2.01-4.79 2.98-7.63 2.77-2.77-.2-5.44-1.77-6.8-4.2-.46-.86-.79-1.79-.93-2.75-.16-1.44.02-2.93.53-4.28 1.04-2.66 3.61-4.6 6.42-4.98.72-.12 1.45-.14 2.17-.08 0 1.51.01 3.03-.01 4.54-.27-.06-.55-.13-.83-.19-.75-.14-1.53-.05-2.25.25-1.52.62-2.59 2.2-2.55 3.84.01 1.34.63 2.67 1.66 3.52.97.79 2.3 1.06 3.53.78 1.48-.31 2.71-1.48 3.22-2.91.18-.44.28-.91.3-1.39.04-4.15-.01-8.3.02-12.45 0-.01.01-.02.01-.03z"/>
+      </symbol>
+      <symbol id="i-ttw" viewBox="0 0 24 24">
+        <!-- Twitch logo (simple-icons, CC0) -->
+        <path fill="currentColor" d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+      </symbol>
+      <symbol id="i-ig" viewBox="0 0 24 24">
+        <!-- Instagram logo (simple-icons, CC0) -->
+        <path fill="currentColor" d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="offline" id="offline">Reconnecting...</div>
+
+  <div class="logo" id="logo">
+    <svg class="icon"><use href="#i-bolt"/></svg>
+    <span class="tooltip">Corvid options</span>
+  </div>
+
+  <div class="divider" aria-hidden="true"></div>
+
+  <div class="rail-scroll" id="scroll">
+    <div id="rail"></div>
+  </div>
+
+  <!-- The "+" lives OUTSIDE the scroll area so it is PINNED near the rail's
+       bottom edge (a 14px air gap keeps it from hugging the frame - the
+       user's aesthetic note; the strip slot in window.rs moves with it). -->
+  <div class="add-wrap" id="addWrap">
+    <button class="add-btn" id="addBtn">
+      <svg class="icon"><use href="#i-plus"/></svg>
+      <span class="tooltip">Add account</span>
+    </button>
+  </div>
+
+  <div class="more-indicator" id="more">
+    <svg><use href="#i-chevdown"/></svg>
+  </div>
+
+  <script>
+    "use strict";
+    let armedId = null;
+    let accounts = [];
+    let activeId = null;
+    let assumedId = null;
+    let wasOffline = false;
+
+    const scroll = document.getElementById("scroll");
+    const addBtn = document.getElementById("addBtn");
+    const rail = document.getElementById("rail");
+
+    async function api(path, options) {
+      const res = await fetch(path, options);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    // Self-heal: if the shell server goes away (restart), show a badge
+    // and reload this page as soon as the server answers again.
+    async function healthWatch() {
+      try {
+        await api("/api/healthz");
+        if (wasOffline) { location.reload(); }
+        document.getElementById("offline").style.display = "none";
+        wasOffline = false;
+      } catch (_) {
+        document.getElementById("offline").style.display = "block";
+        wasOffline = true;
+      }
+      setTimeout(healthWatch, 2000);
+    }
+
+    async function loadRail() {
+      let data;
+      try { data = await api("/api/accounts"); }
+      catch (e) { return; } // healthWatch handles reconnection UI
+      accounts = data.accounts || [];
+      // Shell button truth: the logo ring and the + fill follow the HOST
+      // (the click already flipped them optimistically; this is the
+      // correction that keeps them honest after tray/API toggles too).
+      if (data.shell) {
+        document.getElementById("logo").classList.toggle("open", !!data.shell.drawer_open);
+        addBtn.classList.toggle("open", !!data.shell.picker_open);
+      }
+      renderRail();
+      updateMoreIndicator();
+    }
+
+    // Theme follows the saved preference (checked on every poll, cheap).
+    // The same payload owns the unread-badge pref: the rail badge hides
+    // entirely when the user switched it off (CSS-level, so stale counts
+    // in the data can never pop a bubble back in a poll beat).
+    async function loadTheme() {
+      try {
+        const prefs = await api("/api/prefs");
+        document.documentElement.dataset.theme = prefs.theme === "light" ? "light" : "dark";
+        document.body.classList.toggle("badges-off", prefs.unread_badges === false);
+      } catch (_) { /* keep current */ }
+    }
+
+    function disarm() {
+      if (armedId) { armedId = null; renderRail(); }
+    }
+
+    // Incremental DOM update (no innerHTML rebuild = no flicker on polls).
+    function serviceGlyph(a) {
+      return a.service === "facebook" ? "#i-fb"
+        : a.service === "instagram" ? "#i-ig"
+        : a.service === "x" ? "#i-xcorp"
+        : a.service === "tiktok" ? "#i-tt"
+        : a.service === "twitch" ? "#i-ttw"
+        : "#i-wa";
+    }
+    function serviceLabel(a) {
+      return a.service === "facebook" ? "Facebook"
+        : a.service === "instagram" ? "Instagram"
+        : a.service === "x" ? "X"
+        : a.service === "tiktok" ? "TikTok"
+        : a.service === "twitch" ? "Twitch"
+        : "WhatsApp";
+    }
+    function serviceName(a) {
+      return a.service === "facebook" ? "Facebook chat"
+        : a.service === "instagram" ? "Instagram DMs"
+        : a.service === "x" ? "X DMs"
+        : a.service === "tiktok" ? "TikTok DMs"
+        : a.service === "twitch" ? "Twitch whispers"
+        : "WhatsApp";
+    }
+    function renderRail() {
+      const byId = new Map();
+      for (const a of accounts) {
+        if (a.active) activeId = a.id;
+        byId.set(a.id, a);
+      }
+      // The click already spoke: drop the override once the server payload
+      // agrees, so later server-side switches (tray, API, toast clicks)
+      // repaint freely again.
+      if (assumedId && accounts.some((a) => a.id === assumedId && a.active)) {
+        assumedId = null;
+      }
+      // Remove stale tiles.
+      for (const el of Array.from(rail.children)) {
+        if (!byId.has(el.dataset.id)) el.remove();
+      }
+      // Update/create tiles in order.
+      accounts.forEach((a, index) => {
+        let el = rail.children[index];
+        const isArmed = armedId === a.id;
+        // Honest dot semantics (the user's spec): green = connected,
+        // yellow = the account needs the human (QR / sign in), red = a
+        // real page problem, grey = unknown / starting / offline-ish.
+        // The dot used to ROTATE green/grey on every poll: the session
+        // cache expired after 2.5s and the UI fell back to "detecting"
+        // until the refresh landed - fixed host-side (stale-while-
+        // revalidate), the dot now keeps the last honest color.
+        const state =
+          a.session_state === "logged_in" ? "logged"
+          : (a.session_state === "scan_qr" || a.session_state === "needs_login") ? "qr"
+          : a.session_state === "page_error" ? "err"
+          : "detecting";
+        const stateLabel =
+          a.session_state === "logged_in" ? "connected"
+          : a.session_state === "scan_qr" ? "waiting for QR"
+          : a.session_state === "needs_login" ? "waiting for sign in"
+          : a.session_state === "page_error" ? "connection problem"
+          : "loading";
+        if (!el || el.dataset.id !== a.id) {
+          el = document.createElement("div");
+          el.dataset.id = a.id;
+          el.innerHTML = `<svg class="icon"><use href="#i-wa"/></svg>` +
+            `<span class="dot"></span>` +
+            `<span class="badge"></span>` +
+            `<span class="tooltip"></span>`;
+          el.onclick = async () => {
+            if (armedId === a.id) {
+              try { await api("/api/accounts/" + encodeURIComponent(a.id), { method: "DELETE" }); } catch (e) { console.error(e); }
+              armedId = null;
+              assumedId = null;
+              loadRail();
+              return;
+            }
+            if (armedId) { disarm(); return; }
+            // Optimistic highlight NOW, then the switch goes live in the
+            // background (the instance move is a couple of ms server side;
+            // the poll used to lag the highlight up to 2.5 s behind it).
+            assumedId = a.id;
+            renderRail();
+            try { await api("/api/accounts/" + encodeURIComponent(a.id) + "/open", { method: "POST" }); } catch (e) { console.error(e); }
+          };
+          el.oncontextmenu = (ev) => {
+            ev.preventDefault();
+            if (armedId === a.id) { disarm(); return; }
+            armedId = a.id;
+            renderRail();
+          };
+          rail.insertBefore(el, rail.children[index] || null);
+        }
+          el.className = "avatar svc-" + (a.service === "facebook" ? "fb"
+            : a.service === "instagram" ? "ig"
+            : a.service === "x" ? "x"
+            : a.service === "tiktok" ? "tiktok"
+            : a.service === "twitch" ? "twitch" : "wa") +
+            ((assumedId ? assumedId === a.id : a.active) ? " active" : "") + (isArmed ? " armed" : "");
+        el.querySelector("use").setAttribute("href", isArmed ? "#i-x" : serviceGlyph(a));
+        el.querySelector(".dot").className = "dot " + state;
+        // Unread bubble (top-right): the count travels with /api/accounts
+        // (page-sampled title badge). "99+" clamps runaway counters.
+        const unread = (typeof a.unread === "number" && a.unread > 0)
+          ? (a.unread > 99 ? "99+" : String(a.unread))
+          : "";
+        const badge = el.querySelector(".badge");
+        badge.textContent = unread;
+        badge.classList.toggle("on", unread !== "");
+        const tip = el.querySelector(".tooltip");
+        tip.textContent = isArmed ? "Click again to delete" : `${a.label} - ${serviceName(a)} - ${stateLabel}`;
+      });
+    }
+
+    // Little "more below" cue when the rail overflows.
+    function updateMoreIndicator() {
+      const more = document.getElementById("more");
+      const remaining = scroll.scrollHeight - scroll.scrollTop - scroll.clientHeight;
+      more.classList.toggle("show", remaining > 24);
+    }
+    scroll.addEventListener("scroll", updateMoreIndicator, { passive: true });
+    window.addEventListener("resize", updateMoreIndicator);
+
+    // Logo click: toggle the full-screen options (preferences / security /
+    // accounts / About).
+    // The green ring flips THE INSTANT the click lands; the host panel
+    // follows a beat later (recreate-per-open keeps z-order on top of the
+    // accounts). The poll corrects a wrong guess with server truth.
+    const logoEl = document.getElementById("logo");
+    logoEl.onclick = async () => {
+      disarm();
+      logoEl.classList.toggle("open");
+      try { await api("/api/ui/drawer", { method: "POST" }); } catch (e) { console.error(e); }
+    };
+
+    // "+" trigger = CLICK (the user's preference over hover-opening).
+    // The + tile FILLS the instant the click lands (its strip covers the
+    // gap while the host builds the menu webview add_child-side).
+    const addWrap = document.getElementById("addWrap");
+    addBtn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      disarm();
+      addBtn.classList.toggle("open");
+      api("/api/ui/picker/toggle", { method: "POST" }).catch(() => {});
+    });
+    addWrap.addEventListener("mouseleave", () => {
+      api("/api/ui/picker/soft-close", { method: "POST" }).catch(() => {});
+    });
+    document.addEventListener("click", (ev) => {
+      if (!addWrap.contains(ev.target)) {
+        api("/api/ui/picker/hide", { method: "POST" }).catch(() => {});
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        api("/api/ui/picker/hide", { method: "POST" }).catch(() => {});
+      }
+    });
+
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") disarm(); });
+
+    // Native-app feel: no browser context menu on the shell UI.
+    document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+    (async () => {
+      await loadRail();
+      await loadTheme();
+      setInterval(loadRail, 2500);
+      setInterval(loadTheme, 10000);
+      healthWatch();
+      // The host can pull the rail's refresh NOW (a new account created
+      // through the + strip must show its tile in a beat, not after the
+      // next poll): cheap idempotent hook.
+      window.__zapdudeRailRefresh = function () { loadRail().catch(() => {}); };
+    })();
+  </script>
+</body>
+</html>
