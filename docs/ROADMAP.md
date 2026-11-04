@@ -109,5 +109,22 @@ Privacy under the engine (whichever one wins the checklist):
 - Order inside stage 2: GNU/Linux first (it is the free-software
   finish line: everything compiles free, end to end), macOS next.
 
+### Decision shape (the user's framing, 2026-11-04, recorded)
+
+CEF is not "the best engine"; it is the only candidate whose shell
+model works TODAY (multiple webviews in one window, popouts,
+custom-protocol shape), so it is the BRIDGE into the engine era. Servo
+is the DESTINATION candidate: the only all-Rust, all-free-software
+engine (MPL-2.0, Linux Foundation Europe), not yet capable of our
+shell (multi-webview and more pending), but shipping monthly. Because
+both live at the SAME tauri runtime layer (`tauri-runtime-cef` and
+`tauri-runtime-servo` are siblings by design), the shell work done in
+the CEF era transfers to the Servo era instead of being thrown away.
+The swap, when it happens, is a runtime-and-verification project, not
+a rewrite. Until Servo passes the checklist on a real session baton,
+the decision stays: stage 1 keeps WebView2 (Windows excellent first,
+user directive), stage 2 opens with CEF as the bridge, Servo re-tested
+quarterly.
+
 Between stages nothing ships in a hurry: a stage closes when the
 previous one is genuinely excellent on REAL sessions, not on hope.
