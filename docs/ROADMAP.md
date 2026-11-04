@@ -79,6 +79,33 @@ What changes, precisely:
   the shell needs (Notification surface or a workable equivalent),
   a bounded payload size for a desktop chat hub, and a license that
   coexists with AGPL-3.0 linking.
+
+### Candidates, verified against 2026 sources (2026-11-04)
+
+Four families considered; the two hardened browser-builds the user
+mentioned are NOT engines:
+
+| Candidate | Shape | Verified state (2026-11-04 sources) | Shell fit today |
+| --- | --- | --- | --- |
+| CEF (Chromium Embedded Framework) via `tauri-apps/cef-rs` (the official Tauri org project; crate `cef`, Apache-2.0 OR MIT, v156.3.0 on 2026-11-01; a `tauri-runtime-cef` runtime crate exists) | embeddable Chromium, binary distribution per OS (CPE de hecho: libcef.dll/.so/framework shipped with the app) | live and frequent releases (278 releases, push cadence measured in days-weeks; targets: Windows x64/arm64/i686, Linux x64/arm64, macOS) | STRONG: real multi-webview model like today; needs an audit for the popout/call window choreography; Windows-first proof path |
+| Servo via the `servo` crate (0.1.0 April 2026, monthly through 0.4.0 July 2026) plus the experimental `tauri-runtime-servo` (Windows/macOS/Linux-x11, in-process libservo) | embeddable free-software engine written in Rust (MPL-2.0), the all-Rust dream | alive and monthly, BUT the runtime docs state multiple webviews in one native window NOT supported yet, no transparent webviews yet, custom-protocol request bodies not exposed | NOT YET for this shell: Corvid's entire model is N webviews in one window (rail, N accounts, drawer, curtain). Watch monthly; revisit each quarter |
+| Verso (Servo-based webview, the earlier Tauri experiment) | project | STALLED/archived 2025-10 (upstream absorbed partially into Servo) | dead as a runtime choice; its ideas live in Servo itself |
+| Gecko (Firefox family: LibreWolf included) / ungoogled-chromium | hardened browser BUILDS, not embeddable engines; Gecko's only maintained embedding path is GeckoView, Android-only | LibreWolf and ungoogled-chromium stay EXCELLENT as the user's own external browser for chat links (the app's browser list already picks up installed browsers) | not applicable as embedded engines; their privacy philosophy informs how WE harden whatever engine we pin |
+
+Privacy under the engine (whichever one wins the checklist):
+
+- The protection does not get carried by a browser brand; it is
+  built: engine sandbox ON (CEF's Windows sandbox needs the bootstrap
+  packaging shape; qualify it, do not ship unsandboxed), Google
+  services stripped at profile/switch level the way ungoogled does
+  with patches, one isolated profile per account as today, the
+  netguard/lens/shield unchanged, zero telemetry anywhere.
+- VERIFY items before any commitment: codec situation of the CEF
+  binary distribution the project would ship (free-software bar),
+  uBlock-under-engine feasibility (today's uBOL mount may need to
+  become CEF request-handler filtering: the netguard pattern already
+  proves the host can answer 403s itself), and the CEF payload size
+  measured, not guessed.
 - Order inside stage 2: GNU/Linux first (it is the free-software
   finish line: everything compiles free, end to end), macOS next.
 
