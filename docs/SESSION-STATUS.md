@@ -1275,9 +1275,13 @@ curl http://127.0.0.1:29977/api/accounts
 > Nothing is wrong in the workflow or the code: it is the GitHub
 > pool, tonight. The release v2.0.0 stands PUBLISHED with the
 > Windows asset only; the dmg assets attach to the same release
-> whenever macOS machines show up. FIRST MOVE NEXT SESSION: check
-> `gh run list` / the run page; if still failed, one
-> `gh run rerun 41852144241 --repo da1fs/corvid --failed` and watch.
+> whenever macOS machines show up. STANDING PLAN SET BY THE USER in
+> the closing chat (2026-11-04 evening): WINDOWS-FIRST until
+> excellent, other systems arrive in the engine era; written into
+> the NEW docs/ROADMAP.md (stage 1 current, stage 2 engine). OPENING
+> MOVE NEXT SESSION: open stage 1 (cut the release.yml macOS rows; no
+> more tags fail on a pool that does not exist), then the smoke test;
+> the dmg rerun stays optional and opportunistic from here on.
 > THE DAY'S TRUTH (verified): official channel = ONE release (v2.0.0)
 > + ONE tag; old release URLs answer live 404; the pre-cut story
 > survives OFFLINE only (backups/stable-dev-* + the archived pre-v2

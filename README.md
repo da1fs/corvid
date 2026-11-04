@@ -214,7 +214,7 @@ zapdude-rs/
 +-- scripts/           # page link + per-page capture hooks, client hints
 +-- ui/                # rail, options (drawer), welcome, strip, curtain
 +-- windows/           # NSIS hooks (cleanup on uninstall)
-+-- docs/              # architecture, voice notes, red lines, session notes
++-- docs/              # architecture, RED-LINES, ROADMAP, voice notes and session notes
 ```
 
 ## Development
