@@ -1238,6 +1238,15 @@ curl http://127.0.0.1:29977/api/accounts
 >      the old bridge on the telemetry side.
 >   5. Rename cut (Corvid binary/AUMID/paths) still waits on its own
 >      checklist; the red-lines doc must ride along unchanged.
+>   6. VERIFIED LIVE 2026-11-04 (after the user asked for cold
+>      confirmation): the official channel carries EXACTLY one release
+>      (v2.0.0, published 15:01) and EXACTLY one tag; a fetch of the
+>      old v1.4.4 release URL answers 404. The pre-cut binaries that
+>      survive are the OFFLINE household copies only (backups/stable-
+>      dev-* plus backups/git-history-pre-v200-cutoff): never
+>      re-pushed, never a public channel; downloads the user made
+>      before the cut stay with their downloaders and are outside the
+>      project's reach by nature.
 > OPERATING LAWS THIS SESSION (further): the repo language stays
 > English; the ToS honesty section keeps zero lawyer tone; every
 > page hook must be able to name its field in the audit table in
