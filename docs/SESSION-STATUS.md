@@ -1266,3 +1266,32 @@ curl http://127.0.0.1:29977/api/accounts
 > English; the ToS honesty section keeps zero lawyer tone; every
 > page hook must be able to name its field in the audit table in
 > docs/RED-LINES.md.
+>
+> ---- SESSION WRAP (2026-11-04, evening) ----
+> FINAL CI STATE: FOUR attempts, every macOS job died in the runner
+> ACQUISITION phase (15m01s x3, then 35m52s in queue; "job was not
+> acquired by Runner of type hosted even after multiple attempts" +
+> capacity banners). Windows passed every round on the first build.
+> Nothing is wrong in the workflow or the code: it is the GitHub
+> pool, tonight. The release v2.0.0 stands PUBLISHED with the
+> Windows asset only; the dmg assets attach to the same release
+> whenever macOS machines show up. FIRST MOVE NEXT SESSION: check
+> `gh run list` / the run page; if still failed, one
+> `gh run rerun 41852144241 --repo da1fs/corvid --failed` and watch.
+> THE DAY'S TRUTH (verified): official channel = ONE release (v2.0.0)
+> + ONE tag; old release URLs answer live 404; the pre-cut story
+> survives OFFLINE only (backups/stable-dev-* + the archived pre-v2
+> git history; those never re-push); installs of 1.4.x keep updating
+> through the existing feed (the matcher accepts the Zapdude_ naming,
+> tests green). main sits at 3587fb9 (devtools harness law: RED-LINES
+> section 7 + README dev note + ramp item), docs at cb60542, site at
+> a7e636a verified live with the honest copy. NEXT SESSION'S ANGLES,
+> in order: (1) the dmg rerun above; (2) REAL smoke test of the slim
+> build on the user's session (toasts, badges, dots, one call: the
+> page link behaves like the old bridge on telemetry); (3) devtools
+> harness v1 under its law + tools/ sweep of dead page-op drivers;
+> (4) the user's dress rehearsal of the update card (1.4.4 ->
+> 2.0.0 through the installed flow, never driven end to end by them
+> yet); (5) rename cut planning (binary/AUMID/paths) on its own
+> checklist. THE USER NEEDS NOTHING ELSE TODAY: the project is
+> committed, verified and resting.
