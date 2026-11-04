@@ -89,3 +89,37 @@ the services authorize in writing: an official business API with
 accounts that opted in through that API's own terms, never through
 a user's consumer session. Until such an authorized path exists for
 each service, the answer stays no.
+
+## 7. The devtools harness: QA-only, compiled out of every release
+
+The maintainer needs one tool the product must never be: a way to
+inspect and poke the SHELL while it runs (documented 2026-11-04, the
+user's explicit request). This is standard code QA, and it keeps its
+head below the red lines by construction:
+
+- It lives behind a cargo feature (`devtools`) AND an env gate
+  (`ZAPDUDE_DEVTOOLS=1` at launch). Release builds and the release
+  workflow never enable either: release binaries carry zero bytes of
+  the harness.
+- What it MAY grow into: read-only state probes (the accounts
+  registry, session/unread stores, the netguard ledger, updater
+  phases, a window/webview census), lifecycle triggers (open, park,
+  curtain, drawer), and synthetic payload injectors that call OUR
+  OWN pipelines directly (for example a notification payload into
+  the toast path, exactly as a page would have produced it) so
+  regressions get found before a tag, not after.
+- What it may NEVER grow into: page operations (send, compose,
+  clicks, calls), service data beyond the telemetry the shell
+  already carries, any endpoint present in a release binary, or any
+  copy that presents it to the public as a feature or an interface.
+- The page keeps exactly ONE inspection channel: the webview's own
+  DevTools console driven by the `tools/*.js` probe scripts
+  (human-attached debugger, the standard developer workflow, no
+  callable surface, nothing automated).
+- If a QA need ever seems to REQUIRE driving the page, the design is
+  wrong: fix the test, never the rule.
+
+Audit duty: every time this harness grows, its endpoints land in
+release notes as "dev diagnostics, compiled out of releases", and the
+harness never ships enabled by accident (the double gate exists
+precisely for that).

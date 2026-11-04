@@ -229,6 +229,14 @@ Requires the stable Rust toolchain; on Windows the WebView2 Runtime
 (bundled with Windows 11), on macOS a WKWebView (multi-webview uses
 private APIs behind Tauri's `unstable` feature).
 
+Dev-time diagnostics exist for QA: a dev build can add
+`--features devtools` plus `ZAPDUDE_DEVTOOLS=1` to run a maintainers'
+harness (shell state probes, synthetic toast payloads so pipelines get
+verified without touching any service). The flag pair is the only
+door: release builds and the release workflow compile it out, so no
+release binary ever carries it. The rules live in
+[docs/RED-LINES.md](docs/RED-LINES.md).
+
 ## Known limitations
 
 - There is no automation of any kind by design (see "What Corvid does

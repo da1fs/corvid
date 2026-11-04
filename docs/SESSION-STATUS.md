@@ -1238,6 +1238,21 @@ curl http://127.0.0.1:29977/api/accounts
 >      the old bridge on the telemetry side.
 >   5. Rename cut (Corvid binary/AUMID/paths) still waits on its own
 >      checklist; the red-lines doc must ride along unchanged.
+>   6. DEVTOOLS HARNESS approved by the user (2026-11-04, chat: "una API
+>      para ti, para mi, para desarrollo y pruebas; NO de cara al
+>      publico"): documented as RED-LINES section 7 + README dev note.
+>      Shape agreed: cargo feature `devtools` AND env gate
+>      ZAPDUDE_DEVTOOLS=1, BOTH required, compiled out of releases and
+>      never enabled by the release workflow. MAY: shell state probes
+>      (accounts, session/unread stores, netguard ledger, updater
+>      phases, window census), lifecycle triggers, synthetic payload
+>      injectors straight into OUR pipelines (toast path etc). MAY
+>      NEVER: page ops (send/compose/clicks/calls), any service data
+>      beyond shell telemetry, presence in a release binary, or copy
+>      presenting it as a public feature. QA NEXT: implement v1 under
+>      that law, and sweep tools/ for drivers of the dead page ops
+>      (fire-call.js and friends were the v1 automation era) while the
+>      probe scripts stay (human-attached DevTools class).
 >   6. VERIFIED LIVE 2026-11-04 (after the user asked for cold
 >      confirmation): the official channel carries EXACTLY one release
 >      (v2.0.0, published 15:01) and EXACTLY one tag; a fetch of the
